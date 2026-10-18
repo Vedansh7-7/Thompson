@@ -12,8 +12,10 @@ config.read("config.ini")
 # PARAMETERS
 seed = config.getint("experiment", "seed")
 rng = np.random.default_rng(seed)
-return_rate = config.getfloat("experiment", " returning_visit_share")
-total_distinct_users = config.getint("experiment", "total_distinct_users")
+days = config.getint("experiment", "days")
+return_rate = config.getfloat("experiment", "returning_visit_share")
+total_visitors_per_day = config.getint("experiment", "visitors_per_day")
+total_distinct_users = max(config.getint("experiment", "total_distinct_users"), (total_visitors_per_day*days))
 
 schedule = [
     (120, 420, 0.04),
@@ -23,7 +25,6 @@ schedule = [
     (1380, 1560, 0.1)
 ]
 
-total_visitors_per_day = config.getint("experiment", "visitors_per_day")
 lambda_rate = np.zeros(1440)
 
 for start, end, pct in schedule:
@@ -42,7 +43,7 @@ poisson_visitors = rng.poisson(lambda_rate)
 # plt.show()  # testing 
 
 not_visited_user_ids = np.arange(1, total_distinct_users+1)
-not_visited_user_ids = rng.shuffle(not_visited_user_ids)
+rng.shuffle(not_visited_user_ids)
 next_user_idx = 0
 visited_user_ids = np.array([], dtype=int)
 
@@ -76,7 +77,8 @@ def simulate_visit(arm):
     return (bought, profit)
 
 def pick_user():
-    global next_user_idx
+    global next_user_idx, visited_user_ids
+
     choose = rng.binomial(n=1, p=return_rate)
     if choose and len(visited_user_ids) > 0:
         uid = rng.choice(visited_user_ids)
@@ -84,7 +86,7 @@ def pick_user():
     else:
         uid = not_visited_user_ids[next_user_idx]
         next_user_idx += 1
-        np.append(visited_user_ids, uid)
+        visited_user_ids = np.append(visited_user_ids, uid)
         visited = 0
 
     return (uid, visited)
@@ -100,7 +102,6 @@ if __name__ == "__main__":
         # "profit": []
     ]
 
-    days = config.getint("experiment", "days")
     for day in range(days):
         for t_min in range(1440):
             for i in range(poisson_visitors[t_min]):
