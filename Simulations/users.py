@@ -35,7 +35,6 @@ for start, end, pct in schedule:
 
 
 print("Validating cutomers dsitribution:", lambda_rate.sum(), "=", total_visitors_per_day)  # testing
-poisson_visitors = rng.poisson(lambda_rate)
 
 # fig, ax = plt.subplots(ncols=2)  # testing
 # ax[0].plot(lambda_rate)  # testing
@@ -103,6 +102,7 @@ if __name__ == "__main__":
     ]
 
     for day in range(days):
+        poisson_visitors = rng.poisson(lambda_rate)
         for t_min in range(1440):
             for i in range(poisson_visitors[t_min]):
                 uid, visited = pick_user()
