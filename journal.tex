@@ -269,6 +269,50 @@ no ``must beat control'' rule and every pick costs \Rs 0. Fixed and peeking keep
 For Bayesian, A/A must be judged differently: by the improvement it would \emph{claim}, not by which arm it picks.
 \todo{measure what Bayesian claims in A/A (e.g. stop day and the claimed gain); save stop day in the CSV.}
 
+
+% ======================================================================
+\entry{20 Oct 2026: Thompson sampling, richer outputs, renaming}{code, results, future scope}
+
+\jpart{Discussions}
+\begin{itemize}
+  \item Thompson sampling changes the traffic split during the test: each hour every offer gets a share
+        equal to its probability of being the best (share of 1000 posterior worlds it wins). Bad offers are
+        starved quickly; uncertain ones keep some traffic (exploration in proportion to uncertainty). It never stops.
+  \item Batched version: shares recomputed once per hour, as real systems do when data arrives in batches.
+  \item One campaign (normal, 3 days): offer 2 got 409 visitors instead of about 15{,}000; offer 3 about 75\%
+        of all traffic.
+  \item Outputs now saved per run: \code{summary\_*.csv} (winner, correct, regret, stopped, stop day) and
+        \code{daily\_regret\_*.csv} (cumulative regret at the end of each day).
+  \item Files renamed: \code{visit\_simulator.py}, \code{hourly\_simulator.py}, \code{monte\_carlo.py},
+        \code{policies.py}, \code{stats\_tests.py}; outputs in \code{outputs/monte\_carlo}; plots numbered 01--11.
+\end{itemize}
+
+\jpart{Metrics: speed (ms per 14-day campaign)}
+Fixed 5, peeking 4, Bayesian 7, Thompson 183 (1000 worlds $\times$ 4 offers drawn every hour).
+
+
+\jpart{Metrics: Thompson sampling (500 campaigns each)}
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Normal scenario & Fixed & Peeking & Bayesian & Thompson \
+\midrule
+Picks offer 3, 3 days   & 32.6\% & 39.0\% & 97.2\% & \textbf{99.0\%} \
+Picks offer 3, 14 days  & 95.4\% & 96.6\% & 99.6\% & \textbf{99.8\%} \
+Average regret, 3 days  & 61{,}524 & 54{,}631 & 47{,}473 & \textbf{8{,}702} \
+Average regret, 14 days & 287{,}006 & 110{,}267 & 62{,}144 & \textbf{13{,}571} \
+\bottomrule
+\end{tabular}
+\end{center}
+Thompson loses about 21 times less than the fixed test over 14 days: bad offers are starved within hours.
+
+\jpart{Future scope}
+\begin{itemize}
+  \item Run campaigns in parallel across CPU cores (\code{ProcessPoolExecutor}; 16 cores available, campaigns are
+        independent with their own seeds): about 10 times faster, identical results.
+  \item Vectorise: simulate all campaigns at once as arrays (50--100 times faster; needs a rewrite of the loop and policies).
+\end{itemize}
+
 % ======================================================================
 % Template for new entries:
 % \entry{DD Mon 2026: Title}{tags}

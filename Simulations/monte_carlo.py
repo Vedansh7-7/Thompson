@@ -1,5 +1,5 @@
 from visit_simulator import offer_map, lambda_rate, rng, days, scenario
-from policies import EqualSplit, PeekingAB, BayesianAB
+from policies import EqualSplit, PeekingAB, BayesianAB, ThompsonAB
 import configparser
 import numpy as np
 import pandas as pd
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     data = []
     cumulative = []                                    # one row per campaign: regret at the end of each day
     number_of_campaigns = config.getint("experiment", "number_of_campaigns")
-    policy = BayesianAB
+    policy = ThompsonAB
     master = np.random.SeedSequence(config.getint("experiment", "seed"))
     children = master.spawn(number_of_campaigns)
 
