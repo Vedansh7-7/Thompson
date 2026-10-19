@@ -24,7 +24,9 @@ Thumbs.db
 
 # ---------- Generated documents ----------
 *.pdf
+!journal.pdf                 # the compiled journal is published
 
 # ---------- Personal / scratch files ----------
+journal.tex                  # journal source stays local; journal.pdf is published
 handoff.md
 Simulations/test.py

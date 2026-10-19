@@ -1,5 +1,5 @@
 from visit_simulator import offer_map, lambda_rate, rng, days, scenario
-from policies import EqualSplit, PeekingAB, BayesianAB, ThompsonAB
+from policies import EqualSplit, PeekingAB, BayesianAB, ThompsonAB, BayesianThompsonAB
 import configparser
 import numpy as np
 import pandas as pd
@@ -30,6 +30,7 @@ def run_campaign(Policy, days, rng):
     daily_regret = []
     policy = Policy(no_of_arms, profits, rng)
     regret = 0
+    shown = np.zeros(no_of_arms)                                            # visitors who saw each arm, incl. after stopping
     
     for day in range(days):
         visits_per_hour = rng.poisson(lambda_hourly_rate)                   # 24 counts, refreshes each day (simulated)
@@ -38,11 +39,13 @@ def run_campaign(Policy, days, rng):
                 tmp = np.zeros(no_of_arms)
                 tmp[chosen] = visits_per_hour[h]
                 regret += tmp * (best_true_profit - true_profit_values)
+                shown += tmp
                 continue
             visitors = policy.allocate(visits_per_hour[h])                  # split the hour across arms (policy)
             bought = rng.binomial(n=visitors, p=probabilities)              # orders per arm (simulated)
             policy.update(visitors, bought)                                 # update the the results (policy)
             regret += visitors * (best_true_profit - true_profit_values)
+            shown += visitors
             
             hours = (day * 24 + h)
             if policy.should_stop(hours):
@@ -56,7 +59,7 @@ def run_campaign(Policy, days, rng):
 
     chosen_arm = policy.choice_test()
 
-    return chosen_arm, regret, policy.policy_name, stopped, day_stopped, daily_regret
+    return chosen_arm, regret, policy.policy_name, stopped, day_stopped, daily_regret, shown
 
 if __name__ == "__main__":
     data = []
@@ -68,7 +71,7 @@ if __name__ == "__main__":
 
     for run_index, child in enumerate(children):
         rng = np.random.default_rng(child)
-        winner, regret, policy_name, stopped, day_stopped, daily_regret = run_campaign(policy, days, rng)
+        winner, regret, policy_name, stopped, day_stopped, daily_regret, shown = run_campaign(policy, days, rng)
         correct = bool(true_profit_values[winner] == true_profit_values.max())
         run = {
             "index": run_index,
@@ -79,7 +82,11 @@ if __name__ == "__main__":
             "correct": correct,
             "regret": round(sum(regret), 2),
             "stopped": stopped,
-            "stop_day": day_stopped
+            "stop_day": day_stopped,
+            "visitors": int(shown.sum()),
+            "expected_profit": round(float(shown @ true_profit_values), 2),         # true profit per visitor x visitors shown each arm
+            "profit_per_visitor": round(float(shown @ true_profit_values / shown.sum()), 4),
+            "conversion": round(float(shown @ probabilities / shown.sum()), 5)      # expected order rate over the campaign
         }
         regret_run = {"index": run_index}
         for i, r in enumerate(daily_regret):

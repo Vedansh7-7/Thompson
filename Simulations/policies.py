@@ -134,7 +134,7 @@ class ThompsonAB(BayesianAB):
         super().__init__(no_of_arms, profits, rng)
         self.policy_name = "ThompsonAB"
         self.shares = [1/no_of_arms] * no_of_arms
-        self.S = 1000
+        self.S = 200                                        # worlds per hour (200 keeps shares accurate to about +-3 points)
 
     def allocate(self, visitors):
         """
