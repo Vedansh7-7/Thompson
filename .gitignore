@@ -1,7 +1,29 @@
-*.pdf
-handoff.md
-
-.vscode
-engine
-Simulations\test.py
+# ---------- Python ----------
 __pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# ---------- Virtual environment ----------
+engine/
+.venv/
+
+# ---------- Editor / OS ----------
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ---------- LaTeX build files (journal.tex is compiled only at the end) ----------
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# ---------- Generated documents ----------
+*.pdf
+
+# ---------- Personal / scratch files ----------
+handoff.md
+Simulations/test.py
