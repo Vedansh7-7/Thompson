@@ -83,4 +83,36 @@ class PeekingAB(EqualSplit):
         if (hour%24 == 23) and (self.choice_test() != 0):
             return True
         return False
-    
+
+
+class BayesianAB(EqualSplit):
+
+    def __init__(self, no_of_arms, profits, rng):
+        super().__init__(no_of_arms, profits, rng)
+        self.policy_name = "BayesianAB"
+        self.threshold = 1e-2
+        self.S = 5000
+        self.expected_loss = np.array([])
+        self.visits_in_prev_loss_update = 0
+
+    def _updating_losses(self):
+        self.a = 1 + self.orders
+        self.b = 1 + (self.visits - self.orders)
+        worlds = self.rng.beta(self.a, self.b, size=(self.S, self.no_of_arms)) * self.profit_per_order
+        losses = worlds.max(axis=1, keepdims=True) - worlds
+        self.expected_loss = losses.mean(axis=0)
+        self.visits_in_prev_loss_update = self.visits.sum()
+
+    def choice_test(self):
+        if self.visits.sum() != self.visits_in_prev_loss_update:
+            self._updating_losses()
+        return self.expected_loss.argmin()
+
+
+    def should_stop(self, hour):
+        if (hour%24 == 23):
+            self._updating_losses()
+            E_loss = self.expected_loss.min()
+            if E_loss < self.threshold:
+                return True
+        return False

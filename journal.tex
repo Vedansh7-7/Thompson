@@ -234,6 +234,41 @@ Check the test every evening; stop at the first significant result and show that
 for the rest of the campaign. The decision is made once. Each extra look is another chance for noise
 to cross the line, so false alarms rise. Expected trade-off: lower regret, more false alarms.
 
+
+% ======================================================================
+\entry{20 Oct 2026: Bayesian expected-loss stopping}{code, results}
+
+\jpart{Discussions}
+\begin{itemize}
+  \item Instead of ``is the gap significant?'', ask ``if I pick this offer now and I'm wrong, how much
+        profit per visitor do I expect to lose?''. Stop when that is below a threshold of caring.
+  \item Posterior per arm: Beta$(1+\text{orders},\,1+\text{visits}-\text{orders})$. Draw $S=5000$ worlds,
+        multiply by profit per order, loss $=$ row maximum $-$ value, expected loss $=$ column mean.
+  \item Checked once per evening (same looks as peeking); threshold $\varepsilon=\Rs 0.01$ per visitor.
+  \item Bugs fixed: Beta parameters fixed at (1,1); comparing rates instead of profit; mean over the whole
+        table instead of \code{axis=0}; an attribute with the same name as a method; comparing arrays in
+        \code{if}; storing a reference to \code{self.visits} instead of its sum.
+  \item Sampling error of the expected loss $\approx$ spread$/\sqrt{S}\approx\Rs 0.0003$, small next to $\varepsilon$.
+\end{itemize}
+
+\jpart{Metrics (500 campaigns each)}
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Normal scenario & Fixed A/B & Peeking A/B & Bayesian \
+\midrule
+Picks offer 3, 3 days      & 32.6\% & 39.0\% & \textbf{97.2\%} \
+Picks offer 3, 14 days     & 95.4\% & 96.6\% & \textbf{99.6\%} \
+Average regret, 3 days     & 61{,}524 & 54{,}631 & \textbf{47{,}473} \
+Average regret, 14 days    & 287{,}006 & 110{,}267 & \textbf{62{,}144} \
+\bottomrule
+\end{tabular}
+\end{center}
+A/A (all offers identical): Bayesian picks each offer about 25\% of the time (control 27\%), because it has
+no ``must beat control'' rule and every pick costs \Rs 0. Fixed and peeking keep control 98\% and 91\%.
+For Bayesian, A/A must be judged differently: by the improvement it would \emph{claim}, not by which arm it picks.
+\todo{measure what Bayesian claims in A/A (e.g. stop day and the claimed gain); save stop day in the CSV.}
+
 % ======================================================================
 % Template for new entries:
 % \entry{DD Mon 2026: Title}{tags}

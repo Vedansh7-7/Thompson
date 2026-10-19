@@ -1,5 +1,5 @@
 from users import offer_map, lambda_rate, rng, days, scenerio
-from class_lib import EqualSplit, PeekingAB
+from class_lib import EqualSplit, PeekingAB, BayesianAB
 import configparser
 import numpy as np
 import pandas as pd
@@ -44,6 +44,7 @@ def run_campaign(Policy, days, rng):
                 break
 
     choosen_arm = policy.choice_test()
+
     return choosen_arm, regret, policy.policy_name
 
 if __name__ == "__main__":
@@ -54,7 +55,7 @@ if __name__ == "__main__":
 
     for run_index, child in enumerate(children):
         rng = np.random.default_rng(child)
-        winner, regret, policy_name = run_campaign(PeekingAB, days, rng)
+        winner, regret, policy_name = run_campaign(BayesianAB, days, rng)
         run = {
             "index": run_index,
             "winner": winner,
