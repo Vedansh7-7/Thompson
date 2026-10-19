@@ -4,3 +4,4 @@ handoff.md
 .vscode
 engine
 Simulations\test.py
+__pycache__/

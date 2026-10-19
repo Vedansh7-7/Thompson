@@ -34,7 +34,7 @@ for start, end, pct in schedule:
         lambda_rate[i%1440] = lam_rate
 
 
-print("Validating cutomers dsitribution:", lambda_rate.sum(), "=", total_visitors_per_day)  # testing
+# print("Validating cutomers dsitribution:", lambda_rate.sum(), "=", total_visitors_per_day)  # testing
 
 # fig, ax = plt.subplots(ncols=2)  # testing
 # ax[0].plot(lambda_rate)  # testing

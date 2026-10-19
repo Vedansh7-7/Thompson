@@ -58,13 +58,13 @@ class EqualSplit:
 
         for arm, t_statistic, p_value, mean_arm in welch_results:
             if (mean_arm > mean_control) and (p_value < (0.05/bonferroni_correction)):  # Bonferroni correction for multiple comparisons
-                print(f"Arm {arm} is significantly better than control with t-statistic: {t_statistic:.4f}, p-value: {p_value:.2e}, mean profit per visitor: {mean_arm:.4f}")
+                # print(f"Arm {arm} is significantly better than control with t-statistic: {t_statistic:.4f}, p-value: {p_value:.2e}, mean profit per visitor: {mean_arm:.4f}")
                 winners.append((arm, mean_arm))
 
         if winners:
-            print(f"Winners: {winners}")
+            # print(f"Winners: {winners}")
             arm, mean = max(winners, key=lambda x: x[1])  # Choose the arm with the highest mean profit per visitor
             return arm
         else:
-            print("No arm is significantly better than control.")
+            # print("No arm is significantly better than control.")
             return 0

@@ -11,9 +11,6 @@ config.read("config.ini")
 # Reshaping the flat 1440 minutes
 lambda_hourly_rate = lambda_rate.reshape(24, 60).sum(axis=1)  # Sum over each hour to get hourly rates
 
-# Shared configuration for the light simulation
-shares = [config.getfloat("traffic_shares", f"arm_{i+1}") for i in range(4)]
-
 # p_values and profits from offer_map
 pvals = [offer_map[arm]['params'][0] for arm in range(4)]
 profits = [offer_map[arm]['params'][1] for arm in range(4)]
