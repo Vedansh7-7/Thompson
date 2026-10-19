@@ -104,8 +104,6 @@ Every figure below averages 500 independent campaigns per method and campaign le
 
 ### Tiny gap: offer 3 is better by only 2.5%
 
-![Tiny-gap scenario](plots/final_five/03_tiny_five_methods.png)
-
 | Method | Picks offer 3, 14 days | Profit lost, 14 days |
 |---|---|---|
 | Fixed A/B test | 16% | ₹37,801 |
