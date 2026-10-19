@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Thompson logo" width="220">
+</p>
+
 # Real-Time Bayesian Experimentation Engine
 
 > *Every day an offer test runs, some customers are shown the loser, and nobody can tell yet
