@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import norm
+from scipy.stats import norm, ttest_ind
 
 
 def two_prop_z(x1, n1, x2, n2):
@@ -26,6 +26,16 @@ def two_prop_z(x1, n1, x2, n2):
     z = (p2 - p1) / std_err
     p_value = 2 * norm.sf(abs(z))
     return z, p_value
+
+def welch_ttest(x1, x2):
+    """Welch's t-test for two independent samples with unequal variances.
+
+    x1, x2: arrays of observations in the two groups
+
+    Returns (t_statistic, p_value). t_statistic is positive when group 2 has the higher mean.
+    """
+    t_statistic, p_value = ttest_ind(x1, x2, equal_var=False)
+    return t_statistic, p_value
 
 
 if __name__ == "__main__":
