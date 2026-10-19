@@ -29,7 +29,9 @@ def two_prop_z(x1, n1, x2, n2):
 
 
 if __name__ == "__main__":
-    # worked example from the lesson: 80/1000 vs 100/1000 -> z about 1.56, p about 0.12
-    print(two_prop_z(80, 1000, 100, 1000))
-    # same rates with 5x the visitors -> z about 3.5
-    print(two_prop_z(400, 5000, 500, 5000))
+    # # worked example from the lesson: 80/1000 vs 100/1000 -> z about 1.56, p about 0.12
+    # print(two_prop_z(80, 1000, 100, 1000))
+    # # same rates with 5x the visitors -> z about 3.5
+    # print(two_prop_z(400, 5000, 500, 5000))
+
+    ...
