@@ -33,14 +33,6 @@ for start, end, pct in schedule:
     for i in range(start, end):
         lambda_rate[i%1440] = lam_rate
 
-
-# print("Validating cutomers dsitribution:", lambda_rate.sum(), "=", total_visitors_per_day)  # testing
-
-# fig, ax = plt.subplots(ncols=2)  # testing
-# ax[0].plot(lambda_rate)  # testing
-# ax[1].plot(poisson_visitors)  # testing
-# plt.show()  # testing 
-
 not_visited_user_ids = np.arange(1, total_distinct_users+1)
 rng.shuffle(not_visited_user_ids)
 next_user_idx = 0

@@ -7,9 +7,9 @@ class EqualSplit:
     def __init__(self, no_of_arms, profits, rng):
         self.policy_name = "EqualSplit"
         self.no_of_arms = no_of_arms
-        self.profit_per_order = np.array(profits)  # Profit per order for each arm (from config)
-        self.rng = rng                              # Random generator passed in, so each run can use its own seed
-        self.shares = 1/no_of_arms  # Equal split among arms
+        self.profit_per_order = np.array(profits)           # Profit per order for each arm (from config)
+        self.rng = rng                                      # Random generator passed in, so each run can use its own seed
+        self.shares = 1/no_of_arms                          # Equal split among arms
         self.visits = np.zeros(no_of_arms, dtype=int)
         self.orders = np.zeros(no_of_arms, dtype=int)
         self.profits = np.zeros(no_of_arms, dtype=float)
@@ -68,3 +68,19 @@ class EqualSplit:
         else:
             # print("No arm is significantly better than control.")
             return 0
+
+    def should_stop(self, hour):
+        return False
+
+
+class PeekingAB(EqualSplit):
+
+    def __init__(self, no_of_arms, profits, rng):
+        super().__init__(no_of_arms, profits, rng)
+        self.policy_name = "PeekingAB"
+
+    def should_stop(self, hour):
+        if (hour%24 == 23) and (self.choice_test() != 0):
+            return True
+        return False
+    

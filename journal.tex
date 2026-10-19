@@ -1,0 +1,242 @@
+% Project journal: Real-Time Bayesian Experimentation Engine
+% Written as we go; compiled only at the end of the project.
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\setlist{nosep,leftmargin=1.4em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+
+\newcommand{\Rs}{Rs.\,}                       % rupee sign (plain text, compiles everywhere)
+\newcommand{\entry}[2]{\section*{#1 \hfill\normalfont\small #2}\addcontentsline{toc}{section}{#1}}
+\newcommand{\jpart}[1]{\subsection*{#1}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\todo}[1]{\textcolor{red}{TODO: #1}}
+
+\title{Project Journal\\\large Real-Time Bayesian Experimentation Engine}
+\date{Started 7 October 2026}
+\author{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+% ======================================================================
+\entry{7 Oct 2026: First plan (demand forecasting)}{planning}
+
+\jpart{Discussions}
+\begin{itemize}
+  \item Reviewed \code{handoff.md}: a Bayesian demand-forecasting and inventory plan (Poisson--Gamma, Walmart M5).
+  \item Critique: M5 is wide-format and highly intermittent (many zero-sales days); sales are censored demand;
+        a constant $\lambda$ over five years is unrealistic; the inventory side would be simulated.
+  \item The plan was too advanced for the current level (only Beta--Binomial updating known so far).
+\end{itemize}
+
+% ======================================================================
+\entry{15 Oct 2026: Pivot to experimentation and bandits}{planning}
+
+\jpart{Discussions}
+\begin{itemize}
+  \item DataFlow (earlier project) reads as a backend/engineering project, not data science: no question,
+        no model, no inference, synthetic data with circular insights, an aspirational tool list.
+  \item Chosen instead: a \textbf{Bayesian experimentation engine} for choosing checkout offers on a
+        quick-commerce app. It builds directly on Beta updating, and experimentation is the core skill
+        of a Product Analyst.
+  \item Deadline: 25 Oct (online assessment on 29 Oct).
+\end{itemize}
+
+\jpart{Research (summary)}
+\begin{itemize}
+  \item Fixed-horizon A/B tests are still the default; peeking inflates false positives (Evan Miller).
+  \item Industry fixes: sequential tests (Spotify: group sequential), always-valid inference (Optimizely),
+        variance reduction (CUPED, Microsoft Bing, about 50\%).
+  \item Bayesian A/B with expected loss (VWO); Thompson sampling (Chapelle \& Li, Yahoo); bandits in platforms
+        (Stitch Fix); contextual bandits (Netflix artwork, Yahoo LinUCB); switchbacks for marketplace
+        interference (DoorDash).
+  \item Honest framing: bandits are good at \emph{earning while learning}, weaker at \emph{measuring} effects.
+        The fair comparison is against a proper A/B test, not a straw man.
+\end{itemize}
+
+% ======================================================================
+\entry{18 Oct 2026: Experiment design and the simulator}{design, simulator}
+
+\jpart{Experiment}
+Which checkout offer should be shown during a campaign? Unit: one cart-page visit.
+Outcome: ordered (0/1) and profit if ordered. Toy values (assumptions, not real data):
+
+\begin{center}
+\begin{tabular}{clccc}
+\toprule
+Arm & Offer & True order rate & Profit per order & Profit per visitor \\
+\midrule
+0 & No offer (control)   & 0.08 & \Rs 90 & \Rs 7.20 \\
+1 & Free delivery        & 0.10 & \Rs 70 & \Rs 7.00 \\
+2 & \Rs 50 off           & 0.12 & \Rs 40 & \Rs 4.80 \\
+3 & \Rs 20 off above 299 & 0.11 & \Rs 70 & \textbf{\Rs 7.70} \\
+\bottomrule
+\end{tabular}
+\end{center}
+Arm 2 converts best but earns least; arm 3 is the true profit winner.
+
+\jpart{Discussions}
+\begin{itemize}
+  \item A/B testing: random split, one change, measure a metric, test whether the gap is noise.
+  \item Simulator design critique: faker names unnecessary; truth is one rate per arm; real conversion rates
+        are small (1--10\%); returning users must keep the same arm (sticky assignment); unit of analysis
+        (user vs visit); simulated clock instead of real waiting; hide the truth from the engine.
+  \item Three different things: true rate $p$ (fixed, hidden), outcome (Bernoulli draw), belief about $p$ (Beta posterior).
+  \item Arrivals: a non-homogeneous Poisson process. Each minute has its own $\lambda_t$; the daily total
+        is Poisson($\sum\lambda_t$), but that says nothing about timing.
+  \item Poisson as many unlikely coin flips; spread $=\sqrt{\lambda}$; relative wobble $=1/\sqrt{\lambda}$.
+  \item Hashing for assignment: \code{sha256("user\_id:experiment\_id") mod 4}. Plain \code{user\_id \% 4}
+        gives identical splits across experiments, so their effects cannot be separated.
+  \item Returning users: share of visits from users seen earlier in the window. ``Repeat purchase rate'' is a
+        different (customer-level) metric. Chosen: 0.15 as an assumption, with sensitivity runs planned.
+\end{itemize}
+
+\jpart{Calculations}
+\begin{align*}
+\text{relative wobble of a Poisson count} &= \frac{\sqrt{\lambda}}{\lambda} = \frac{1}{\sqrt{\lambda}}
+  \qquad (\lambda=40:\ 16\%\ \text{per minute};\ \lambda=2400:\ 2\%\ \text{per hour})\\
+\text{expected distinct users (pool $M$, $N$ visits)} &= M\left(1-e^{-N/M}\right)\\
+\text{share of visits from someone already seen} &= 1-\frac{1}{\text{average visits per active user}}
+\end{align*}
+
+\jpart{Daily traffic schedule}
+Daypart shares from an industry article (Zane, 2 Aug 2026; no dataset cited, treated as plausible ranges):
+07--11: 16\%, 11--17: 24\%, 17--23: 46\%, 23--02: 10\%, 02--07: 4\% (own assumption). About 20{,}000 visits per day.
+
+% ======================================================================
+\entry{19 Oct 2026: Simulator fixes, first tests, light simulator, Monte Carlo}{code, tests, results}
+
+\jpart{Code results: per-visit simulator (\code{users.py})}
+\begin{itemize}
+  \item Bugs found and fixed: \code{np.zeros(1, 100001)} (second argument is dtype); \code{rng.shuffle} returns
+        \code{None}; \code{np.append} does not modify in place (silent bug: returning share was 0\%);
+        hidden ID cap (100{,}000 IDs last about 5.9 days at about 17{,}000 new users per day);
+        Poisson counts drawn once and copied to every day (fixed by drawing inside the day loop).
+  \item Verified (3 days, seed 42, 60{,}374 visits): visits per day 20{,}320 / 19{,}884 / 20{,}170; window shares
+        4.0 / 16.1 / 24.0 / 46.0 / 9.9\%; returning share 15.1\%; 0 users saw more than one arm.
+  \item Speed: about 136\,$\mu$s per visit (2.8\,s per day), too slow for repeated campaigns.
+\end{itemize}
+
+\jpart{Calculations: two-proportion z-test}
+\[
+\bar p = \frac{x_1+x_2}{n_1+n_2},\qquad
+SE = \sqrt{\bar p(1-\bar p)\left(\tfrac1{n_1}+\tfrac1{n_2}\right)},\qquad
+z = \frac{\hat p_2-\hat p_1}{SE},\qquad p = 2\,\Phi^{c}(|z|)
+\]
+\begin{itemize}
+  \item Pooling: under $H_0$ both groups share one rate, so it is estimated from the two groups in the test only.
+  \item z grows like $\sqrt{n}$: ten times the data gives $\sqrt{10}\approx3.16$ times the z.
+  \item \code{norm.sf} vs \code{1-norm.cdf}: identical in theory; \code{sf} keeps precision in the far tail
+        (at $z=9.35$, \code{1-cdf} returns 0, \code{sf} returns $4.4\times10^{-21}$).
+  \item The p-value is $P(\text{data this extreme}\mid H_0)$, not $P(H_0)$.
+\end{itemize}
+
+\jpart{Code results: tests on the 3-day run}
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Comparison & Result & Note \\
+\midrule
+Conversion, arm 0 vs arm 2 & $z=9.35$, $p=8.7\times10^{-21}$ & matches statsmodels and $\chi^2=z^2=87.43$ \\
+Conversion, arm 0 vs arm 3 & $z=7.00$ & notebook had 6.44 (used sum of \code{day} as $n$) \\
+95\% CI, conversion gap arm 3 -- arm 0 & (1.71, 3.04) points & notebook had swapped sample sizes \\
+Profit per visitor, arm 3 vs arm 0 (Welch) & $t=-0.097$, $p=0.92$ & true gap +\Rs 0.50 is invisible \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\jpart{Calculations: Welch's t-test from totals}
+Each visitor's profit is 0 or $m$ (fixed profit per order), so from totals alone:
+\[
+\text{mean} = m\,p,\qquad \text{variance} = m^2\,p(1-p),\qquad
+t = \frac{\bar x_k-\bar x_0}{\sqrt{s_k^2/n_k + s_0^2/n_0}}
+\]
+Sample size for a \Rs 0.50 gap (5\% level, 80\% power):
+$n \approx (1.96+0.84)^2(\sigma_0^2+\sigma_3^2)/0.5^2 \approx 34{,}000$ visitors per arm
+(about 7 days of all traffic).
+
+\jpart{Code results: light simulator (\code{light\_sim.py}, \code{class\_lib.py})}
+\begin{itemize}
+  \item Hourly batches: visits $\sim$ Poisson(hourly $\lambda$); split $\sim$ Multinomial(visits, shares);
+        orders $\sim$ Binomial(per-arm visits, true rates).
+  \item Policy classes (\code{EqualSplit}) with \code{allocate}, \code{update}, \code{choice\_test};
+        the class holds memory and rules, the loop is the world.
+  \item Bugs fixed in \code{choice\_test}: variance used the mean instead of $m$; NumPy array has no
+        \code{append}; \code{max} is a built-in, not a list method; \code{import scipy.stats as norm}
+        renamed the module instead of importing the distribution.
+  \item Fixed A/B test, one run: 3 days gives no winner (keeps control); 14 days picks arm 3
+        ($t=4.18$, $p=2.9\times10^{-5}$).
+\end{itemize}
+
+\jpart{Experiments: Monte Carlo (500 campaigns each, seeds from \code{SeedSequence(42).spawn})}
+Scenarios: \emph{normal} (table above), \emph{aa} (all rates 0.10, all profits \Rs 70),
+\emph{tiny} (rates 0.080, 0.080, 0.080, 0.082, all profits \Rs 90).
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Fixed A/B test & 3 days & 14 days \\
+\midrule
+Normal: picks true best (arm 3) & 32.6\% & 95.4\% \\
+A/A: false alarms (picks a non-control arm) & 1.4\% & 2.2\% \\
+Tiny gap: picks arm 3 & 3.6\% & 16.2\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+All match theory: normal power about 30\% / 95\%; tiny about 4\% / 15\%; A/A about 2\% at both lengths.
+
+\jpart{Calculations: A/A false-alarm rate of the fixed test}
+Per comparison, $|t|>2.39$ (two-sided $0.05/3$), and only ``better than control'' counts:
+$P(t>2.39)\approx0.83\%$. Three comparisons: $1-(1-0.0083)^3\approx2.5\%$ if independent; slightly
+less because they share the control group, so about 2\%. For a fixed test this does not depend on
+the number of days.
+
+\jpart{Discussions}
+\begin{itemize}
+  \item Monte Carlo (repeat with different seeds and count outcomes) is not MCMC (Markov chain Monte
+        Carlo, a technique for sampling posteriors).
+  \item Monte Carlo error on a rate: $\sqrt{p(1-p)/R}$, about $\pm2$ points at $R=500$ near 95\%.
+  \item Regret: for every visitor, (best true profit per visitor $-$ shown arm's true profit per visitor).
+        Best arm $=\max(\text{rate}\times\text{profit})$, not $\max(\text{profit})$.
+  \item In A/A every arm is the best, so regret is always 0; A/A is judged by the false-alarm rate.
+\end{itemize}
+
+\jpart{Metrics}
+Peeking vs fixed, 500 campaigns each (regret and stop day from a corrected rollout loop, see below):
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+ & \multicolumn{2}{c}{3 days} & \multicolumn{2}{c}{14 days} \\
+ & Fixed & Peeking & Fixed & Peeking \\
+\midrule
+A/A false alarms              & 1.4\% & 3.8\% & 2.2\% & \textbf{9.4\%} \\
+Normal: picks arm 3           & 32.6\% & 39.0\% & 95.4\% & 96.6\% \\
+Normal: average regret (\Rs)  & 61{,}524 & 54{,}631 & 287{,}006 & 110{,}267 \\
+Normal: stopped early         & -- & 40\% & -- & 97\% (median day 4) \\
+\bottomrule
+\end{tabular}
+\end{center}
+Peeking every evening for 14 days raises false alarms about 4 times (2.2\% to 9.4\%). In the normal
+scenario it saves money (regret down 62\%) because the true gap is large enough to be found early.
+The user's code gave the same A/A rate (9.4\%). Its earlier regret (\Rs 115{,}572) was slightly off:
+after stopping, the loop added one equally-split hour per remaining day instead of sending all traffic
+to the chosen arm for every remaining hour.
+
+\jpart{Discussions: peeking}
+Check the test every evening; stop at the first significant result and show that offer to everyone
+for the rest of the campaign. The decision is made once. Each extra look is another chance for noise
+to cross the line, so false alarms rise. Expected trade-off: lower regret, more false alarms.
+
+% ======================================================================
+% Template for new entries:
+% \entry{DD Mon 2026: Title}{tags}
+% \jpart{Experiments} \jpart{Discussions} \jpart{Calculations} \jpart{Code results} \jpart{Metrics}
+
+\end{document}
