@@ -1,4 +1,4 @@
-from users import offer_map, lambda_rate, rng, days
+from users import offer_map, lambda_rate, rng, days, scenerio
 from class_lib import EqualSplit
 import configparser
 import numpy as np
@@ -44,4 +44,4 @@ if __name__ == "__main__":
         data.append(run)
 
     df = pd.DataFrame(data)
-    df.to_csv('MC_output.csv', index=False)
+    df.to_csv(f'MC_output_{scenerio}_{days}d.csv', index=False)

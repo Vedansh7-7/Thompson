@@ -1,12 +1,11 @@
-t1 = []
-t2 = [0]
-t3 = [2]
-t4 = [1, 3]
-if t1:
-    print("t1:")
-if t2:
-    print("t2:")
-if t3:
-    print("t3:")
-if t4:
-    print("t4:")
+import configparser
+
+config = configparser.ConfigParser()
+config.read("config.ini")
+
+scenario = "scenario_" + str(config["experiment"]["scenario"])
+rates = config.get(scenario, "rates")
+profits = config.get(scenario, "profits")
+
+print("Rates:", rates)
+print("Profits:", profits)

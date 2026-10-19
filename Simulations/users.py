@@ -45,16 +45,21 @@ not_visited_user_ids = np.arange(1, total_distinct_users+1)
 rng.shuffle(not_visited_user_ids)
 next_user_idx = 0
 visited_user_ids = np.array([], dtype=int)
+scenerio = str(config["experiment"]["scenario"])   # normal | aa | tiny
+section = "scenario_" + scenerio
+
+rates = [float(x) for x in config.get(section, "rates").strip("[]").split(",")]
+profits = [float(x) for x in config.get(section, "profits").strip("[]").split(",")]
 
 offer_map = {
     0: {"label": "Control",
-        "params": [config.getfloat("rates", "arm_1"), config.getfloat("profits", "arm_1")]},
+        "params": [rates[0], profits[0]]},
     1: {"label": "FreeDelivery",
-        "params": [config.getfloat("rates", "arm_2"), config.getfloat("profits", "arm_2")]},
+        "params": [rates[1], profits[1]]},
     2: {"label": "INR_50_off",
-        "params": [config.getfloat("rates", "arm_3"), config.getfloat("profits", "arm_3")]},
+        "params": [rates[2], profits[2]]},
     3: {"label": "INR_20_off_above_299",
-        "params": [config.getfloat("rates", "arm_4"), config.getfloat("profits", "arm_4")]}
+        "params": [rates[3], profits[3]]}
 }
 
 # FUNCTIONS
