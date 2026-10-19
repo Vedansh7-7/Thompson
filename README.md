@@ -12,7 +12,6 @@ A simulator and decision engine for choosing between checkout offers on a quick-
 offer, faster and with less wasted traffic, than a standard fixed-length A/B test?**
 
 All data is simulated, so every method can be scored against the known truth.
-The full project log is in [`journal.pdf`](journal.pdf).
 
 ![Overview](plots/final_five/00_overview.png)
 
