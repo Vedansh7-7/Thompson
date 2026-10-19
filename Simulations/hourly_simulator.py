@@ -1,6 +1,6 @@
-from users import offer_map, lambda_rate, rng, days
-from statistical_test import two_prop_z, welch_ttest
-from class_lib import EqualSplit
+from visit_simulator import offer_map, lambda_rate, rng, days
+from stats_tests import two_prop_z, welch_ttest
+from policies import EqualSplit
 import configparser
 import numpy as np
 

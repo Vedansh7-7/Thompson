@@ -1,5 +1,5 @@
-from users import offer_map, lambda_rate, rng, days, scenerio
-from class_lib import EqualSplit, PeekingAB, BayesianAB
+from visit_simulator import offer_map, lambda_rate, rng, days, scenario
+from policies import EqualSplit, PeekingAB, BayesianAB
 import configparser
 import numpy as np
 import pandas as pd
@@ -54,13 +54,13 @@ def run_campaign(Policy, days, rng):
         
         daily_regret.append(regret.sum())
 
-    choosen_arm = policy.choice_test()
+    chosen_arm = policy.choice_test()
 
-    return choosen_arm, regret, policy.policy_name, stopped, day_stopped, daily_regret
+    return chosen_arm, regret, policy.policy_name, stopped, day_stopped, daily_regret
 
 if __name__ == "__main__":
     data = []
-    cummulative = []                                    # one row per campaign: regret at the end of each day
+    cumulative = []                                    # one row per campaign: regret at the end of each day
     number_of_campaigns = config.getint("experiment", "number_of_campaigns")
     policy = BayesianAB
     master = np.random.SeedSequence(config.getint("experiment", "seed"))
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         run = {
             "index": run_index,
             "policy": policy_name,
-            "scenario": scenerio,
+            "scenario": scenario,
             "days": days,
             "winner": winner,
             "correct": correct,
@@ -85,13 +85,13 @@ if __name__ == "__main__":
         for i, r in enumerate(daily_regret):
             regret_run[f"regret_d{i+1}"] = round(r, 2)
         data.append(run)
-        cummulative.append(regret_run)
+        cumulative.append(regret_run)
 
     df = pd.DataFrame(data)
-    df.to_csv(f'../outputs/MonteCarlo/MC_output_{policy_name}_{scenerio}_{days}d.csv', index=False)
-    print(f"Saved as '../outputs/MonteCarlo/MC_output_{policy_name}_{scenerio}_{days}d.csv'")
+    df.to_csv(f'../outputs/monte_carlo/summary_{policy_name}_{scenario}_{days}d.csv', index=False)
+    print(f"Saved as '../outputs/monte_carlo/summary_{policy_name}_{scenario}_{days}d.csv'")
     print("Average regret =", df['regret'].mean())
 
-    df_cum = pd.DataFrame(cummulative)
-    df_cum.to_csv(f'../outputs/MonteCarlo/cummulative_regret_{policy_name}_{scenerio}_{days}d.csv', index=False)
-    print(f"Saved as '../outputs/MonteCarlo/cummulative_regret_{policy_name}_{scenerio}_{days}d.csv'")
+    df_cum = pd.DataFrame(cumulative)
+    df_cum.to_csv(f'../outputs/monte_carlo/daily_regret_{policy_name}_{scenario}_{days}d.csv', index=False)
+    print(f"Saved as '../outputs/monte_carlo/daily_regret_{policy_name}_{scenario}_{days}d.csv'")

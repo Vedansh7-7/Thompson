@@ -22,7 +22,7 @@ The simulator produces a realistic stream of cart-page visits for four competing
 | **Returning customers** | A configurable share of visits comes from users who visited before |
 | **Fair, repeatable offer assignment** | A salted SHA-256 hash maps each user to one of four offers, so a returning user always sees the same offer |
 | **Order outcomes with a known truth** | Each visit orders with the offer's true probability, and earns the offer's profit if it does |
-| **Event log** | Every visit is saved to `output.csv`: day, minute, user, returning flag, offer, ordered, profit |
+| **Event log** | Every visit is saved to `outputs/visit_log.csv`: day, minute, user, returning flag, offer, ordered, profit |
 | **Everything is configurable** | True rates, profits, daily volume, number of days, seed and returning share live in `config.ini` |
 
 The four offers (toy values chosen so the best offer for conversion is not the best for profit):
@@ -137,10 +137,11 @@ The scripts read `config.ini` from the current directory, so run from inside `Si
 
 ```text
 cd Simulations
-python users.py
+python visit_simulator.py   # one realistic run, visit by visit
+python monte_carlo.py       # 500 campaigns of one policy and scenario
 ```
 
-This writes `output.csv`. Dependencies: `numpy`, `pandas`, `matplotlib`. Python 3.13 was used.
+These write `outputs/visit_log.csv` and `outputs/monte_carlo/summary_*.csv` / `daily_regret_*.csv`. Dependencies: `numpy`, `pandas`, `matplotlib`. Python 3.13 was used.
 
 `config.ini` keys:
 

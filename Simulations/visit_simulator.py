@@ -37,8 +37,8 @@ not_visited_user_ids = np.arange(1, total_distinct_users+1)
 rng.shuffle(not_visited_user_ids)
 next_user_idx = 0
 visited_user_ids = np.array([], dtype=int)
-scenerio = str(config["experiment"]["scenario"])   # normal | aa | tiny
-section = "scenario_" + scenerio
+scenario = str(config["experiment"]["scenario"])   # normal | aa | tiny
+section = "scenario_" + scenario
 
 rates = [float(x) for x in config.get(section, "rates").strip("[]").split(",")]
 profits = [float(x) for x in config.get(section, "profits").strip("[]").split(",")]
@@ -116,4 +116,4 @@ if __name__ == "__main__":
                 }
                 data.append(user_info)
     df = pd.DataFrame(data)
-    df.to_csv('output.csv', index=False)
+    df.to_csv('../outputs/visit_log.csv', index=False)
